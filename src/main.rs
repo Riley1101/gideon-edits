@@ -5,5 +5,4 @@ use editor::Editor;
 
 fn main() {
     Editor::default().run();
-    let somesize = (10, 20);
 }

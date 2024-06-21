@@ -1,7 +1,10 @@
-use crate::terminal;
-use crossterm::event::{read, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers};
-use crossterm::terminal::disable_raw_mode;
-use crossterm::terminal::enable_raw_mode;
+use crate::terminal::{self, Size};
+use crossterm::event::{
+    read,
+    Event::{self, Key},
+    KeyCode::Char,
+    KeyEvent, KeyModifiers,
+};
 use terminal::Terminal;
 
 pub struct Editor {
@@ -22,56 +25,47 @@ impl Editor {
 
     pub fn repl(&mut self) -> Result<(), std::io::Error> {
         loop {
-            if let Key(KeyEvent {
-                code,
-                modifiers,
-                kind,
-                state,
-            }) = read()?
-            {
-                self.refresh_screen()?;
-                if self.should_quit {
-                    break;
-                }
-                match code {
-                    Char('q') if modifiers == KeyModifiers::CONTROL => {
-                        self.should_quit = true;
-                    }
-                    Char('c') if modifiers == KeyModifiers::CONTROL => {
-                        print!("\x1b[2J");
-                    }
-                    _ => {
-                        println!(
-                    "Code: {code:?} Modifiers: {modifiers:?} Kind: {kind:?} State: {state:?} \r"
-                );
-                    }
-                }
-
-                if self.should_quit {
-                    break;
-                }
+            self.refresh_screen()?;
+            if self.should_quit {
+                break;
             }
+            let event = read()?;
+            self.evalutate_event(&event);
         }
         Ok(())
     }
 
+    fn evalutate_event(&mut self, event: &Event) {
+        if let Key(KeyEvent {
+            code, modifiers, ..
+        }) = event
+        {
+            match code {
+                Char('q') if *modifiers == KeyModifiers::CONTROL => {
+                    self.should_quit = true;
+                }
+                _ => {}
+            }
+        }
+    }
+
     fn refresh_screen(&self) -> Result<(), std::io::Error> {
+        Terminal::hide_cursor()?;
         if self.should_quit {
             Terminal::clear_screen()?;
-            println!("Good bye\n");
         } else {
             Self::draw_rows()?;
-            Terminal::move_cursor_to(0, 0);
         }
         Ok(())
     }
 
     fn draw_rows() -> Result<(), std::io::Error> {
-        let height = Terminal::size()?.1;
+        let Size { height, .. } = Terminal::size()?;
         for current_row in 0..height {
-            print!("~");
+            Terminal::clear_line()?;
+            Terminal::print("~")?;
             if current_row + 1 < height {
-                println!("\r\n");
+                Terminal::print("\r\n")?;
             }
         }
         Ok(())
