@@ -1,4 +1,4 @@
-use crate::terminal::{self, Position, Size};
+use crate::terminal::{self, Operations, Position, Size};
 use crossterm::event::{
     read,
     Event::{self, Key},
