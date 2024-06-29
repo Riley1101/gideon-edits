@@ -8,16 +8,22 @@ use std::io::{stdout, Error, Write};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Size {
-    pub width: u16,
-    pub height: u16,
+    pub width: usize,
+    pub height: usize,
 }
 
 #[derive(Copy, Clone)]
 pub struct Position {
-    pub x: u16,
-    pub y: u16,
+    pub x: usize,
+    pub y: usize,
 }
 
+/// Represents the Terminal.
+/// Edge Case for platforms where `usize` < `u16`:
+/// Regardless of the actual size of the Terminal, this representation
+/// only spans over at most `usize::MAX` or `u16::size` rows/columns, whichever is smaller.
+/// Each size returned truncates to min(`usize::MAX`, `u16::MAX`)
+/// And should you attempt to set the cursor out of these bounds, it will also be truncated.
 pub struct Terminal;
 
 pub trait Operations {
@@ -31,16 +37,29 @@ pub trait Operations {
 
     fn show_cursor() -> Result<(), Error>;
 
+    /// Prints the given string to the terminal.
+    /// # Arguments
+    /// * `string` - the string to print.
     fn print(string: &str) -> Result<(), Error>;
 
     fn clear_screen() -> Result<(), Error>;
 
+    /// Moves the cursor to the given Position.
+    /// # Arguments
+    /// * `Position` - the  `Position`to move the cursor to. Will be truncated to `u16::MAX` if bigger.
     fn move_cursor_to(p: Position) -> Result<(), Error>;
 
+    /// Returns the current size of this Terminal.
+    /// Edge Case for systems with `usize` < `u16`:
+    /// * A `Size` representing the terminal size. Any coordinate `z` truncated to `usize` if `usize` < `z` < `u16`
     fn size() -> Result<Size, Error>;
 
     fn execute() -> Result<(), Error>;
 
+    /// Queues the given command to be executed.
+    /// # Arguments
+    /// * `T` - the type of command to queue.
+    /// * `command` - the command to queue.
     fn queue_command<T: Command>(command: T) -> Result<(), Error>;
 }
 
@@ -84,13 +103,18 @@ impl Operations for Terminal {
     }
 
     fn move_cursor_to(p: Position) -> Result<(), Error> {
-        Self::queue_command(MoveTo(p.x, p.y))?;
+        let (x_usize, y_usize) = (p.x, p.y);
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+        Self::queue_command(MoveTo(x_usize as u16, y_usize as u16))?;
         Ok(())
     }
 
     fn size() -> Result<Size, Error> {
-        let (width, height) = size()?;
-        Ok(Size { width, height })
+        let (width_16, height_16) = size()?;
+        Ok(Size {
+            width: width_16 as usize,
+            height: height_16 as usize,
+        })
     }
 
     fn execute() -> Result<(), Error> {
