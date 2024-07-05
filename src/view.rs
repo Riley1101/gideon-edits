@@ -48,10 +48,11 @@ impl View {
 
         #[allow(clippy::integer_division)]
         let padding = width.saturating_sub(len) / 2;
-
         let spaces = " ".repeat(padding.saturating_sub(1));
         welcome_message = format!("~{spaces}{welcome_message}");
+        welcome_message.truncate(width);
         Terminal::print(&welcome_message)?;
+        Terminal::print("\r\n")?;
         Ok(())
     }
 

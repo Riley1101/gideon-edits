@@ -9,9 +9,6 @@ use crossterm::event::{
 use std::{cmp::min, env, io::Error};
 use terminal::Terminal;
 
-const NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 #[derive(Clone, Copy, Default)]
 struct Location {
     x: usize,
