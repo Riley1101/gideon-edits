@@ -1,5 +1,3 @@
-
-#[derive(Debug)]
 pub struct Buffer {
     pub lines: Vec<String>,
 }
