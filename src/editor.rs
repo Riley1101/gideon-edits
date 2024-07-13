@@ -64,6 +64,9 @@ impl Editor {
             KeyCode::Up => {
                 y = y.saturating_sub(1);
             }
+            KeyCode::Down => {
+                y = min(height.saturating_add(1), y.saturating_add(1));
+            }
             KeyCode::PageUp => {
                 y = 0;
             }
@@ -114,7 +117,7 @@ impl Editor {
         Ok(())
     }
 
-    fn refresh_screen(&self) -> Result<(), Error> {
+    fn refresh_screen(&mut self) -> Result<(), Error> {
         Terminal::hide_cursor()?;
         Terminal::move_cursor_to(Position::default())?;
         if self.should_quit {

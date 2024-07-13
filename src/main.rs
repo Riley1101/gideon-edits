@@ -14,5 +14,3 @@ use editor::Editor;
 fn main() {
     Editor::default().run();
 }
-
-// TODO show welcome not showing empty lines
