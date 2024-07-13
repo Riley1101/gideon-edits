@@ -130,7 +130,6 @@ impl Editor {
                 y: self.location.y,
             })?;
         }
-
         Terminal::show_cursor()?;
         Terminal::execute()?;
         Ok(())

@@ -28,8 +28,10 @@ impl View {
         if !self.need_redraw {
             return Ok(());
         }
-
         let Size { width, height } = self.size;
+        if width == 0 && height == 0 {
+            return Ok(());
+        }
 
         let vertical_center = height / 3;
 
@@ -57,10 +59,9 @@ impl View {
         }
         let welcome_message = format!("{NAME} editor -- version {VERSION}");
         let len = welcome_message.len();
-        if width < len {
+        if width <= len {
             return "~".to_string();
         }
-
         let padding = (width.saturating_sub(len).saturating_sub(1)) / 2;
         let mut full_message = format!("~{}{}", " ".repeat(padding), welcome_message);
         full_message.truncate(width);
@@ -68,7 +69,7 @@ impl View {
     }
 
     pub fn render_line(at: usize, line_text: &str) -> Result<(), Error> {
-        Terminal::move_cursor_to(Position { x: at, y: 0 })?;
+        Terminal::move_cursor_to(Position { x: 0, y: at })?;
         Terminal::clear_line()?;
         Terminal::print(line_text)?;
         Ok(())
@@ -77,6 +78,7 @@ impl View {
     pub fn load(&mut self, file_name: &str) {
         if let Ok(buffer) = Buffer::load(file_name) {
             self.buffer = buffer;
+            self.need_redraw = true;
         }
     }
 }
