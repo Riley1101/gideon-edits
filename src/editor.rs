@@ -1,28 +1,40 @@
 use crate::terminal::{self, Operations, Position, Size};
-use crate::view::View;
+use crate::view::{Location, View};
 use crossterm::event::{
     read,
     Event::{self, Key},
     KeyCode::{self, Char},
     KeyEvent, KeyModifiers,
 };
+use std::panic::{set_hook, take_hook};
 use std::{cmp::min, env, io::Error};
 use terminal::Terminal;
-
-#[derive(Clone, Copy, Default)]
-struct Location {
-    x: usize,
-    y: usize,
-}
 
 #[derive(Default)]
 pub struct Editor {
     should_quit: bool,
-    location: Location,
     view: View,
 }
 
 impl Editor {
+    pub fn new() -> Result<Self, Error> {
+        let current_hook = take_hook();
+        set_hook(Box::new(move |panic_info| {
+            let _ = Terminal::terminate();
+            current_hook(panic_info);
+        }));
+        Terminal::initialize()?;
+        let mut view = View::default();
+        let args: Vec<String> = env::args().collect();
+        if let Some(file_name) = args.get(1) {
+            view.load(file_name);
+        }
+        Ok(Self {
+            should_quit: false,
+            view,
+        })
+    }
+
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
         self.handle_args();
@@ -51,7 +63,7 @@ impl Editor {
     }
 
     pub fn move_points(&mut self, key_code: KeyCode) -> Result<(), Error> {
-        let Location { mut x, mut y } = self.location;
+        let Location { mut x, mut y } = self.view.location;
         let Size { height, width } = Terminal::size()?;
 
         match key_code {

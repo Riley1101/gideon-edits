@@ -1,6 +1,7 @@
 #![allow(clippy::integer_division)]
 use super::terminal::{Operations, Position, Size, Terminal};
 mod buffer;
+mod line;
 use buffer::Buffer;
 use std::io::Error;
 
