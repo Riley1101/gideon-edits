@@ -1,8 +1,8 @@
 #![allow(clippy::integer_division)]
-use super::terminal::{Operations, Position, Size, Terminal};
-mod buffer;
-mod line;
+use super::buffer;
+use crate::editor;
 use buffer::Buffer;
+use editor::terminal::{Operations, Position, Size, Terminal};
 use std::io::Error;
 
 const NAME: &str = env!("CARGO_PKG_NAME");

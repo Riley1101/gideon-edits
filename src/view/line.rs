@@ -14,7 +14,7 @@ impl Line {
 
     fn get(&self, range: Range<usize>) -> String {
         let start = range.start;
-        let end = cmp.min(range.end, self.string.len());
+        let end = cmp::min(range.end, self.string.len());
         self.string.get(start..end).unwrap_or_default().to_string()
     }
 }
