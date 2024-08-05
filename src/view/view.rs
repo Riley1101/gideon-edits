@@ -32,6 +32,10 @@ impl Default for View {
 }
 
 impl View {
+    pub fn get_position(&mut self) -> Position {
+        self.location.subtract(&self.scroll_offset).into()
+    }
+
     pub fn render(&mut self) -> Result<(), Error> {
         if !self.need_redraw {
             return Ok(());

@@ -55,7 +55,7 @@ impl Editor {
     fn evalutate_event(&mut self, event: Event) {
         let should_process = match &event {
             Event::Key(KeyEvent { kind, .. }) => kind == &KeyEventKind::Press,
-            Event::Resize(0, 1) => true,
+            Event::Resize(_, _) => true,
             _ => false,
         };
 
@@ -64,12 +64,15 @@ impl Editor {
                 Ok(command) => {
                     if matches!(command, EditorCommand::Quit) {
                         self.should_quit = true;
-                    }else {
+                    } else {
                         self.view.handle_command(command);
                     }
                 }
                 Err(err) => {
-                    panic!("Could not handle command {err}")
+                    #[cfg(debug_assertions)]
+                    {
+                        panic!("Could not handle command {err}");
+                    }
                 }
             }
         }
@@ -78,6 +81,18 @@ impl Editor {
     fn refresh_screen(&mut self) -> Result<(), Error> {
         let _ = Terminal::hide_cursor();
         self.view.render()?;
+        let _ = Terminal::move_cursor_to(self.view.get_position());
+        let _ = Terminal::show_cursor();
+        let _ = Terminal::execute();
         Ok(())
+    }
+}
+
+impl Drop for Editor {
+    fn drop(&mut self) {
+        let _ = Terminal::terminate();
+        if self.should_quit {
+            let _ = Terminal::print("Goodbye!\r\n");
+        }
     }
 }
