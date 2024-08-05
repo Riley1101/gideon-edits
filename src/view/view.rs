@@ -1,6 +1,9 @@
 #![allow(clippy::integer_division)]
-use super::buffer;
-use crate::editor;
+use super::{buffer, location::Location};
+use crate::editor::{
+    self,
+    editor_commands::{Direction, EditorCommand},
+};
 use buffer::Buffer;
 use editor::terminal::{Operations, Position, Size, Terminal};
 use std::io::Error;
@@ -12,6 +15,8 @@ pub struct View {
     buffer: Buffer,
     need_redraw: bool,
     size: Size,
+    location: Location,
+    scroll_offset: Location,
 }
 
 impl Default for View {
@@ -20,6 +25,8 @@ impl Default for View {
             buffer: Buffer::default(),
             need_redraw: true,
             size: Terminal::size().unwrap_or_default(),
+            location: Location::default(),
+            scroll_offset: Location::default(),
         }
     }
 }
@@ -80,6 +87,65 @@ impl View {
         if let Ok(buffer) = Buffer::load(file_name) {
             self.buffer = buffer;
             self.need_redraw = true;
+        }
+    }
+
+    pub fn scroll_location_into_view(&mut self) {
+        let Location { x, y } = self.location;
+        let Size { width, height } = self.size;
+        let mut offset_changed = false;
+
+        if y < self.scroll_offset.y {
+            self.scroll_offset.y = y;
+            offset_changed = true;
+        } else if y >= self.scroll_offset.y.saturating_add(height) {
+            self.scroll_offset.y = y.saturating_sub(height).saturating_add(1);
+        }
+
+        if x < self.scroll_offset.x {
+            self.scroll_offset.x = x;
+            offset_changed = true;
+        } else if x >= self.scroll_offset.x.saturating_add(width) {
+            self.scroll_offset.x = x.saturating_sub(width).saturating_add(1);
+        }
+        self.need_redraw = offset_changed;
+    }
+
+    fn move_text_location(&mut self, direction: &Direction) {
+        let Location { mut x, mut y } = self.location;
+        let Size { width, height } = self.size;
+
+        match direction {
+            Direction::Up => {
+                y = y.saturating_sub(1);
+            }
+            Direction::Down => {
+                y = y.saturating_add(1);
+            }
+            Direction::Left => x = x.saturating_sub(1),
+            Direction::Right => x = x.saturating_add(1),
+            Direction::PageDown => y = height.saturating_sub(1),
+            Direction::PageUp => y = 0,
+            Direction::Home => {
+                x = 0;
+            }
+            Direction::End => x = width.saturating_sub(1),
+        }
+        self.location = Location { x, y };
+        self.scroll_location_into_view();
+    }
+
+    pub fn resize(&mut self, to: Size) {
+        self.size = to;
+        self.scroll_location_into_view();
+        self.need_redraw = true;
+    }
+
+    pub fn handle_command(&mut self, command: EditorCommand) {
+        match command {
+            EditorCommand::Resize(size) => self.resize(size),
+            EditorCommand::Move(direction) => self.move_text_location(&direction),
+            EditorCommand::Quit => {}
         }
     }
 }

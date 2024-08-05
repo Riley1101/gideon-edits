@@ -1,5 +1,7 @@
+use super::editor_commands;
 use super::terminal::{self, Operations};
-use crossterm::event::{read, Event};
+use crossterm::event::{read, Event, KeyEvent, KeyEventKind};
+use editor_commands::EditorCommand;
 use std::panic::{set_hook, take_hook};
 use std::{env, io::Error};
 use terminal::Terminal;
@@ -32,7 +34,7 @@ impl Editor {
     }
 
     pub fn run(&mut self) -> Result<(), Error> {
-        Ok(loop {
+        loop {
             self.refresh_screen()?;
             if self.should_quit {
                 break;
@@ -46,10 +48,32 @@ impl Editor {
                     }
                 }
             }
-        })
+        }
+        Ok(())
     }
 
-    fn evalutate_event(&mut self, _event: Event) {}
+    fn evalutate_event(&mut self, event: Event) {
+        let should_process = match &event {
+            Event::Key(KeyEvent { kind, .. }) => kind == &KeyEventKind::Press,
+            Event::Resize(0, 1) => true,
+            _ => false,
+        };
+
+        if should_process {
+            match EditorCommand::try_from(event) {
+                Ok(command) => {
+                    if matches!(command, EditorCommand::Quit) {
+                        self.should_quit = true;
+                    }else {
+                        self.view.handle_command(command);
+                    }
+                }
+                Err(err) => {
+                    panic!("Could not handle command {err}")
+                }
+            }
+        }
+    }
 
     fn refresh_screen(&mut self) -> Result<(), Error> {
         let _ = Terminal::hide_cursor();
