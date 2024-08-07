@@ -27,6 +27,8 @@ pub struct Position {
 pub struct Terminal;
 
 pub trait Operations {
+    fn print_row(row: usize, text: &str) -> Result<(), Error>;
+
     fn terminate() -> Result<(), Error>;
 
     fn initialize() -> Result<(), Error>;
@@ -124,6 +126,14 @@ impl Operations for Terminal {
 
     fn queue_command<T: Command>(command: T) -> Result<(), Error> {
         queue!(stdout(), command)?;
+        Ok(())
+    }
+
+    fn print_row(row: usize, text: &str) -> Result<(), Error> {
+        Self::move_cursor_to(Position { x: 0, y: row })?;
+        Self::clear_line()?;
+        Self::print(text)?;
+        Self::execute()?;
         Ok(())
     }
 }

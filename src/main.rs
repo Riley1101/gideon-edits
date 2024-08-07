@@ -7,7 +7,6 @@
 
 mod editor;
 mod view;
-
 use editor::editor::Editor;
 
 fn main() -> Result<(), std::io::Error> {

@@ -1,12 +1,12 @@
 #![allow(clippy::integer_division)]
-use super::{buffer, location::Location};
+use super::{buffer, line::Line, location::Location};
 use crate::editor::{
     self,
     editor_commands::{Direction, EditorCommand},
 };
 use buffer::Buffer;
 use editor::terminal::{Operations, Position, Size, Terminal};
-use std::io::Error;
+use std::{cmp::min, io::Error};
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -41,20 +41,18 @@ impl View {
             return Ok(());
         }
         let Size { width, height } = self.size;
-        if width == 0 && height == 0 {
+
+        if width == 0 || height == 0 {
             return Ok(());
         }
 
         let vertical_center = height / 3;
-
+        let top = self.scroll_offset.y;
         for current_row in 0..height {
-            if let Some(line) = self.buffer.lines.get(current_row) {
-                let trancated_line = if line.len() >= width {
-                    &line[0..width]
-                } else {
-                    line
-                };
-                Self::render_line(current_row, trancated_line)?;
+            if let Some(line) = self.buffer.lines.get(current_row.saturating_add(top)) {
+                let left = self.scroll_offset.x;
+                let right = self.scroll_offset.x.saturating_add(width);
+                Self::render_line(current_row, &line.get(left..right))?;
             } else if current_row == vertical_center && self.buffer.is_empty() {
                 Self::render_line(current_row, &Self::build_welcome_message(width))?;
             } else {
@@ -81,9 +79,8 @@ impl View {
     }
 
     pub fn render_line(at: usize, line_text: &str) -> Result<(), Error> {
-        Terminal::move_cursor_to(Position { x: 0, y: at })?;
-        Terminal::clear_line()?;
-        Terminal::print(line_text)?;
+        let result = Terminal::print_row(at, line_text);
+        debug_assert!(result.is_ok(), "Failed to render line");
         Ok(())
     }
 
@@ -117,7 +114,7 @@ impl View {
 
     fn move_text_location(&mut self, direction: &Direction) {
         let Location { mut x, mut y } = self.location;
-        let Size { width, height } = self.size;
+        let Size { height, .. } = self.size;
 
         match direction {
             Direction::Up => {
@@ -126,15 +123,37 @@ impl View {
             Direction::Down => {
                 y = y.saturating_add(1);
             }
-            Direction::Left => x = x.saturating_sub(1),
-            Direction::Right => x = x.saturating_add(1),
-            Direction::PageDown => y = height.saturating_sub(1),
-            Direction::PageUp => y = 0,
+            Direction::Left => {
+                if x > 0 {
+                    x = x.saturating_sub(1);
+                } else if y > 0 {
+                    y = y.saturating_sub(1);
+                    x = self.buffer.lines.get(y).map_or(0, Line::len);
+                }
+            }
+            Direction::Right => {
+                let width = self.buffer.lines.get(y).map_or(0, Line::len);
+                if x < width {
+                    x = x.saturating_add(1);
+                } else if y < self.buffer.lines.len().saturating_sub(1) {
+                    y = y.saturating_add(1);
+                    x = 0;
+                }
+            }
+            Direction::PageUp => y = y.saturating_sub(height).saturating_sub(1),
+            Direction::PageDown => y = y.saturating_add(height).saturating_sub(1),
             Direction::Home => {
                 x = 0;
             }
-            Direction::End => x = width.saturating_sub(1),
+            Direction::End => x = self.buffer.lines.get(y).map_or(0, Line::len),
         }
+
+        x = self
+            .buffer
+            .lines
+            .get(y)
+            .map_or(0, |line| min(line.len(), x));
+        y = min(y, self.buffer.lines.len());
         self.location = Location { x, y };
         self.scroll_location_into_view();
     }

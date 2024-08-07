@@ -42,7 +42,12 @@ impl TryFrom<Event> for EditorCommand {
 
                 _ => Err(format!("Key code not supported {code:?}")),
             },
-            _ => Ok(Self::Quit),
+            Event::Resize(width_u16, height_u16) => {
+                let height = height_u16 as usize;
+                let width = width_u16 as usize;
+                Ok(Self::Resize(Size { width, height }))
+            }
+            _ => Err(format!("Event not supported {event:?}")),
         }
     }
 }
