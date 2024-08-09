@@ -33,9 +33,9 @@ impl Editor {
         })
     }
 
-    pub fn run(&mut self) -> Result<(), Error> {
+    pub fn run(&mut self) {
         loop {
-            self.refresh_screen()?;
+            self.refresh_screen();
             if self.should_quit {
                 break;
             }
@@ -49,7 +49,6 @@ impl Editor {
                 }
             }
         }
-        Ok(())
     }
 
     fn evalutate_event(&mut self, event: Event) {
@@ -78,13 +77,12 @@ impl Editor {
         }
     }
 
-    fn refresh_screen(&mut self) -> Result<(), Error> {
+    fn refresh_screen(&mut self) {
         let _ = Terminal::hide_cursor();
-        self.view.render()?;
+        self.view.render();
         let _ = Terminal::move_cursor_to(self.view.get_position());
         let _ = Terminal::show_cursor();
         let _ = Terminal::execute();
-        Ok(())
     }
 }
 

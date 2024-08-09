@@ -12,7 +12,7 @@ use editor::editor::Editor;
 fn main() -> Result<(), std::io::Error> {
     match Editor::new() {
         Ok(mut e) => {
-            e.run()?;
+            e.run();
         }
         Err(_) => {
             Err(std::io::Error::new(

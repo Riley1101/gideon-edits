@@ -36,14 +36,14 @@ impl View {
         self.location.subtract(&self.scroll_offset).into()
     }
 
-    pub fn render(&mut self) -> Result<(), Error> {
+    pub fn render(&mut self) {
         if !self.need_redraw {
-            return Ok(());
+            return;
         }
         let Size { width, height } = self.size;
 
         if width == 0 || height == 0 {
-            return Ok(());
+            return;
         }
 
         let vertical_center = height / 3;
@@ -52,15 +52,14 @@ impl View {
             if let Some(line) = self.buffer.lines.get(current_row.saturating_add(top)) {
                 let left = self.scroll_offset.x;
                 let right = self.scroll_offset.x.saturating_add(width);
-                Self::render_line(current_row, &line.get(left..right))?;
+                Self::render_line(current_row, &line.get(left..right));
             } else if current_row == vertical_center && self.buffer.is_empty() {
-                Self::render_line(current_row, &Self::build_welcome_message(width))?;
+                Self::render_line(current_row, &Self::build_welcome_message(width));
             } else {
-                Self::render_line(current_row, "~")?;
+                Self::render_line(current_row, "~");
             }
         }
         self.need_redraw = false;
-        Ok(())
     }
 
     pub fn build_welcome_message(width: usize) -> String {
@@ -78,10 +77,9 @@ impl View {
         full_message
     }
 
-    pub fn render_line(at: usize, line_text: &str) -> Result<(), Error> {
+    pub fn render_line(at: usize, line_text: &str) {
         let result = Terminal::print_row(at, line_text);
         debug_assert!(result.is_ok(), "Failed to render line");
-        Ok(())
     }
 
     pub fn load(&mut self, file_name: &str) {
@@ -96,11 +94,13 @@ impl View {
         let Size { width, height } = self.size;
         let mut offset_changed = false;
 
+        // scroll vertically
         if y < self.scroll_offset.y {
             self.scroll_offset.y = y;
             offset_changed = true;
         } else if y >= self.scroll_offset.y.saturating_add(height) {
             self.scroll_offset.y = y.saturating_sub(height).saturating_add(1);
+            offset_changed = true;
         }
 
         if x < self.scroll_offset.x {
@@ -108,6 +108,7 @@ impl View {
             offset_changed = true;
         } else if x >= self.scroll_offset.x.saturating_add(width) {
             self.scroll_offset.x = x.saturating_sub(width).saturating_add(1);
+            offset_changed = true;
         }
         self.need_redraw = offset_changed;
     }
