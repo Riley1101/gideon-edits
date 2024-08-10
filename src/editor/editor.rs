@@ -80,7 +80,7 @@ impl Editor {
     fn refresh_screen(&mut self) {
         let _ = Terminal::hide_cursor();
         self.view.render();
-        let _ = Terminal::move_cursor_to(self.view.get_position());
+        let _ = Terminal::move_cursor_to(self.view.cursor_position());
         let _ = Terminal::show_cursor();
         let _ = Terminal::execute();
     }
@@ -94,3 +94,4 @@ impl Drop for Editor {
         }
     }
 }
+
