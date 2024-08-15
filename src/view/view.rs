@@ -17,6 +17,7 @@ pub struct Location {
     pub line_index: usize,
 }
 
+#[derive(Debug)]
 pub struct View {
     buffer: Buffer,
     need_redraw: bool,
@@ -169,6 +170,8 @@ impl View {
     fn move_left(&mut self) {
         if self.text_location.grapheme_index > 0 {
             self.text_location.grapheme_index -= 1;
+        } else if self.text_location.line_index == 0 {
+            // skips jumping to end in first line
         } else {
             self.move_up(1);
             self.move_to_end_of_line();
@@ -247,5 +250,55 @@ mod view_checks {
         let view = View::default();
         let position = view.text_location_to_position();
         assert_eq!(position, Position { x: 0, y: 0 });
+    }
+
+    #[test]
+    fn should_load_buffer_correctly() {
+        let mut view = View::default();
+        view.load("tests/wisper.txt");
+        assert_eq!(view.buffer.height(), 11);
+    }
+
+    #[test]
+    fn move_up() {
+        let mut view = View::default();
+        view.load("tests/wisper.txt");
+        view.move_up(1);
+        assert_eq!(view.text_location.line_index, 0);
+    }
+
+    #[test]
+    fn move_down() {
+        let mut view = View::default();
+        view.load("tests/wisper.txt");
+        view.move_down(3);
+        assert_eq!(view.text_location.line_index, 3);
+    }
+
+    #[test]
+    fn move_left() {
+        let mut view = View::default();
+        view.load("tests/wisper.txt");
+        view.move_left();
+        assert_eq!(view.text_location.grapheme_index, 0);
+
+        view.move_down(1);
+        view.move_left();
+        assert_eq!(view.text_location.grapheme_index, 25);
+    }
+
+    #[test]
+    fn move_right() {
+        let mut view = View::default();
+        view.load("tests/wisper.txt");
+        view.move_right();
+        view.move_right();
+        view.move_right();
+        assert_eq!(view.text_location.grapheme_index, 3);
+
+        for _ in 0..24 {
+            view.move_right();
+        }
+        assert_eq!(view.text_location.grapheme_index, 0);
     }
 }
