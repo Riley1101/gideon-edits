@@ -11,7 +11,7 @@ use std::cmp::min;
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Location {
     pub grapheme_index: usize,
     pub line_index: usize,
@@ -39,8 +39,8 @@ impl Default for View {
 
 impl View {
     pub fn text_location_to_position(&self) -> Position {
-        let x = self.text_location.line_index;
-        let y = self.buffer.lines.get(x).map_or(0, |line| {
+        let y = self.text_location.line_index;
+        let x = self.buffer.lines.get(y).map_or(0, |line| {
             line.width_until(self.text_location.grapheme_index)
         });
         Position { x, y }
@@ -141,9 +141,9 @@ impl View {
     fn move_text_location(&mut self, direction: &Direction) {
         let Size { height, .. } = self.size;
         match direction {
-            Direction::Up =>{  
+            Direction::Up => {
                 self.move_up(1);
-            },
+            }
             Direction::Down => self.move_down(1),
             Direction::Left => self.move_left(),
             Direction::Right => self.move_right(),
@@ -228,5 +228,24 @@ impl View {
             EditorCommand::Move(direction) => self.move_text_location(&direction),
             EditorCommand::Quit => {}
         }
+    }
+}
+
+#[cfg(test)]
+mod view_checks {
+    use super::Location;
+    use super::*;
+    #[test]
+    fn default_location_check() {
+        let view = View::default();
+        let default_location = Location::default();
+        assert_eq!(&view.text_location, &default_location);
+    }
+
+    #[test]
+    fn text_location_to_position_check() {
+        let view = View::default();
+        let position = view.text_location_to_position();
+        assert_eq!(position, Position { x: 0, y: 0 });
     }
 }

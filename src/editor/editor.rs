@@ -94,4 +94,3 @@ impl Drop for Editor {
         }
     }
 }
-
