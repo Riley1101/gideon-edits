@@ -24,6 +24,7 @@ struct TextFragment {
     replacement: Option<char>,
 }
 
+#[derive(Debug)]
 pub struct Line {
     fragments: Vec<TextFragment>,
 }
@@ -90,5 +91,25 @@ impl Line {
                 GraphemeWidth::Half => 1,
             })
             .sum()
+    }
+}
+
+#[cfg(test)]
+mod line_check {
+    use super::*;
+    #[test]
+    fn should_have_correct_graphemes() {
+        let text_one = "Hello, world!";
+        let text_two = "Ä"; // German A with Umlaut
+        let text_three = "Ａ"; // Like an A, but wider
+        let text_four = "👋"; // Normal Emoji
+        let line = Line::from(text_one);
+        let line_two = Line::from(text_two);
+        let line_three = Line::from(text_three);
+        let line_four = Line::from(text_four);
+        assert_eq!(line.grapheme_count(), 13);
+        assert_eq!(line_two.grapheme_count(), 1);
+        assert_eq!(line_three.grapheme_count(), 1);
+        assert_eq!(line_four.grapheme_count(), 1);
     }
 }

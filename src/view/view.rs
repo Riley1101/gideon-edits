@@ -141,7 +141,9 @@ impl View {
     fn move_text_location(&mut self, direction: &Direction) {
         let Size { height, .. } = self.size;
         match direction {
-            Direction::Up => self.move_up(1),
+            Direction::Up =>{  
+                self.move_up(1);
+            },
             Direction::Down => self.move_down(1),
             Direction::Left => self.move_left(),
             Direction::Right => self.move_right(),
@@ -156,6 +158,7 @@ impl View {
         self.text_location.line_index = self.text_location.line_index.saturating_sub(step);
         self.snap_to_valid_grapheme();
     }
+
     fn move_down(&mut self, step: usize) {
         self.text_location.line_index = self.text_location.line_index.saturating_add(step);
         self.snap_to_valid_grapheme();
