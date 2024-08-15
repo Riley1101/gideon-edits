@@ -107,11 +107,11 @@ impl View {
 
     fn scroll_vertically(&mut self, to: usize) {
         let Size { height, .. } = self.size;
-        let offset_changed = if to < self.scroll_offset.x {
-            self.scroll_offset.x = to;
+        let offset_changed = if to < self.scroll_offset.y {
+            self.scroll_offset.y = to;
             true
         } else if to >= self.scroll_offset.x.saturating_add(height) {
-            self.scroll_offset.x = to.saturating_sub(height).saturating_add(1);
+            self.scroll_offset.y = to.saturating_sub(height).saturating_add(1);
             true
         } else {
             false
@@ -121,11 +121,11 @@ impl View {
 
     fn scroll_horizontally(&mut self, to: usize) {
         let Size { width, .. } = self.size;
-        let offset_changed = if to < self.scroll_offset.y {
-            self.scroll_offset.y = to;
+        let offset_changed = if to < self.scroll_offset.x {
+            self.scroll_offset.x = to;
             true
         } else if to <= self.scroll_offset.y.saturating_add(width) {
-            self.scroll_offset.y = to.saturating_sub(width).saturating_sub(1);
+            self.scroll_offset.x = to.saturating_sub(width).saturating_sub(1);
             true
         } else {
             false
@@ -135,8 +135,8 @@ impl View {
 
     pub fn scroll_location_into_view(&mut self) {
         let Position { x, y } = self.text_location_to_position();
-        self.scroll_vertically(x);
-        self.scroll_horizontally(y);
+        self.scroll_vertically(y);
+        self.scroll_horizontally(x);
     }
 
     fn move_text_location(&mut self, direction: &Direction) {
@@ -235,7 +235,7 @@ impl View {
 }
 
 #[cfg(test)]
-mod view_checks {
+mod view_movements_checks {
     use super::Location;
     use super::*;
     #[test]
@@ -300,5 +300,18 @@ mod view_checks {
             view.move_right();
         }
         assert_eq!(view.text_location.grapheme_index, 0);
+    }
+
+    #[test]
+    fn scroll_horizontally() {
+        let mut view = View::default();
+        view.load("tests/wisper.txt");
+        view.resize(Size {
+            width: 2,
+            height: 2,
+        });
+
+        view.scroll_horizontally(5);
+        dbg!(view);
     }
 }
