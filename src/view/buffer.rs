@@ -1,4 +1,5 @@
 use super::line::Line;
+use super::view::Location;
 use std::fs::read_to_string;
 use std::io::Error;
 
@@ -24,6 +25,17 @@ impl Buffer {
 
     pub fn height(&self) -> usize {
         self.lines.len()
+    }
+
+    pub fn insert_char(&mut self, c: char, at: Location) {
+        if at.line_index > self.lines.len() {
+            return;
+        }
+        if at.line_index > self.lines.len() {
+            self.lines.push(Line::from(&c.to_string()));
+        } else if let Some(line) = self.lines.get_mut(at.line_index) {
+            line.insert_char(c, at.grapheme_index);
+        }
     }
 }
 
