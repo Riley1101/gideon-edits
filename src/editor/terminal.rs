@@ -27,14 +27,6 @@ impl Position {
     }
 }
 
-#[cfg(test)]
-mod position_test {
-    #[test]
-    fn position() {
-        todo!();
-    }
-}
-
 /// Represents the Terminal.
 /// Edge Case for platforms where `usize` < `u16`:
 /// Regardless of the actual size of the Terminal, this representation

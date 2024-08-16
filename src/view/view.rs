@@ -124,7 +124,7 @@ impl View {
         let offset_changed = if to < self.scroll_offset.x {
             self.scroll_offset.x = to;
             true
-        } else if to <= self.scroll_offset.y.saturating_add(width) {
+        } else if to >= self.scroll_offset.x.saturating_add(width) {
             self.scroll_offset.x = to.saturating_sub(width).saturating_sub(1);
             true
         } else {
@@ -153,6 +153,7 @@ impl View {
             Direction::Home => self.move_to_start_of_line(),
             Direction::End => self.move_to_end_of_line(),
         }
+        self.scroll_location_into_view();
     }
 
     fn move_up(&mut self, step: usize) {
