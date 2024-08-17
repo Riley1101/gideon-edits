@@ -27,10 +27,13 @@ impl Buffer {
         self.lines.len()
     }
 
-    pub fn insert_char(&mut self, c: char, at: Location) {
-        if at.line_index > self.lines.len() {
-            return;
-        }
+    pub fn delete(&mut self, at: &Location) {
+        if let Some(line) = self.lines.get_mut(at.line_index) {
+            line.delete(at.grapheme_index);
+        };
+    }
+
+    pub fn insert_char(&mut self, c: char, at: &Location) {
         if at.line_index > self.lines.len() {
             self.lines.push(Line::from(&c.to_string()));
         } else if let Some(line) = self.lines.get_mut(at.line_index) {

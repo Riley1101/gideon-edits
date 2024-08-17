@@ -232,8 +232,9 @@ impl View {
             .lines
             .get(self.text_location.line_index)
             .map_or(0, Line::grapheme_count);
-        self.buffer
-            .insert_char(character, self.text_location.clone());
+
+        self.buffer.insert_char(character, &self.text_location);
+
         let new_len = self
             .buffer
             .lines
@@ -246,12 +247,24 @@ impl View {
         self.need_redraw = true;
     }
 
+    fn backspace(&mut self) {
+        self.move_left();
+        self.delete();
+    }
+
+    fn delete(&mut self) {
+        self.buffer.delete(&self.text_location);
+        self.need_redraw = true;
+    }
+
     pub fn handle_command(&mut self, command: EditorCommand) {
         match command {
             EditorCommand::Resize(size) => self.resize(size),
             EditorCommand::Insert(char) => self.insert_char(char),
             EditorCommand::Move(direction) => self.move_text_location(&direction),
             EditorCommand::Quit => {}
+            EditorCommand::Delete => self.delete(),
+            EditorCommand::Backspace => self.backspace(),
         }
     }
 }
