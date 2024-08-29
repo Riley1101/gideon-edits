@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{fmt, ops::Range};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -159,6 +159,21 @@ impl Line {
             }
         }
         self.fragments = Self::str_to_fragments(&result);
+    }
+
+    pub fn append(&mut self, other: &Self) {
+        let mut concat = self.to_string();
+    }
+}
+
+impl fmt::Display for Line {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let result: String = self
+            .fragments
+            .iter()
+            .map(|fragment| fragment.grapheme.clone())
+            .collect();
+        write!(f, "{result}")
     }
 }
 

@@ -171,9 +171,7 @@ impl View {
     fn move_left(&mut self) {
         if self.text_location.grapheme_index > 0 {
             self.text_location.grapheme_index -= 1;
-        } else if self.text_location.line_index == 0 {
-            // skips jumping to end in first line
-        } else {
+        } else if self.text_location.line_index > 0 {
             self.move_up(1);
             self.move_to_end_of_line();
         }
@@ -248,8 +246,10 @@ impl View {
     }
 
     fn backspace(&mut self) {
-        self.move_left();
-        self.delete();
+        if self.text_location.line_index != 0 && self.text_location.grapheme_index != 0 {
+            self.move_text_location(&Direction::Left);
+            self.delete();
+        }
     }
 
     fn delete(&mut self) {
