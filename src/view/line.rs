@@ -24,7 +24,7 @@ struct TextFragment {
     replacement: Option<char>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Line {
     fragments: Vec<TextFragment>,
 }

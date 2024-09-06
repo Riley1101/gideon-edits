@@ -47,6 +47,12 @@ impl Buffer {
             line.insert_char(c, at.grapheme_index);
         }
     }
+
+    pub fn insert_newline(&mut self, at: &Location) {
+        if at.line_index == self.height() {
+            self.lines.push(Line::default());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -65,5 +71,17 @@ mod buffer_checks {
         let dawn = "tests/dawn.txt";
         let buffer_two = Buffer::load(dawn).unwrap();
         assert_eq!(buffer_two.height(), 11);
+    }
+
+    #[test]
+    fn should_insert_another_line() {
+        let dawn = "tests/dawn.txt";
+        let mut buffer = Buffer::load(dawn).unwrap();
+        buffer.insert_newline(&Location {
+            grapheme_index: 0,
+            line_index: 11,
+        });
+
+        assert_eq!(buffer.height(), 12);
     }
 }
