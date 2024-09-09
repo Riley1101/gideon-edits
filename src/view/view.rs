@@ -2,6 +2,7 @@
 use super::{buffer, line::Line};
 use crate::editor::{
     self,
+    editor::DocumentStatus,
     editor_commands::{Direction, EditorCommand},
 };
 use buffer::Buffer;
@@ -264,7 +265,30 @@ impl View {
     }
 
     fn save(&mut self) {
-        self.buffer.save();
+        let _ = self.buffer.save();
+    }
+
+    pub fn new(margin_bottom: usize) -> Self {
+        let terminal_size = Terminal::size().unwrap_or_default();
+        Self {
+            buffer: Buffer::default(),
+            need_redraw: true,
+            size: Size {
+                width: terminal_size.width,
+                height: terminal_size.height.saturating_sub(margin_bottom),
+            },
+            text_location: Location::default(),
+            scroll_offset: Position::default(),
+        }
+    }
+
+    pub fn get_status(&self) -> DocumentStatus {
+        DocumentStatus {
+            total_lines: self.buffer.height(),
+            current_line_index: self.text_location.line_index,
+            file_name: self.buffer.file_name.clone(),
+            is_modified: self.buffer.dirty,
+        }
     }
 
     pub fn handle_command(&mut self, command: EditorCommand) {

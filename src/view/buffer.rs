@@ -8,6 +8,7 @@ use std::io::Write;
 pub struct Buffer {
     pub lines: Vec<Line>,
     pub file_name: Option<String>,
+    pub dirty: bool,
 }
 
 impl Buffer {
@@ -21,15 +22,17 @@ impl Buffer {
         Ok(Self {
             lines,
             file_name: Some(file_name.to_string()),
+            dirty: false,
         })
     }
 
-    pub fn save(&self) -> Result<(), Error> {
+    pub fn save(&mut self) -> Result<(), Error> {
         if let Some(file_name) = &self.file_name {
             let mut file = File::create(file_name)?;
             for line in &self.lines {
                 writeln!(file, "{line}")?;
             }
+            self.dirty = false;
         };
         Ok(())
     }
@@ -52,14 +55,17 @@ impl Buffer {
             } else if at.grapheme_index < line.grapheme_count() {
                 self.lines[at.line_index].delete(at.grapheme_index);
             }
+            self.dirty = true;
         };
     }
 
     pub fn insert_char(&mut self, c: char, at: &Location) {
         if at.line_index > self.lines.len() {
             self.lines.push(Line::from(&c.to_string()));
+            self.dirty = true;
         } else if let Some(line) = self.lines.get_mut(at.line_index) {
             line.insert_char(c, at.grapheme_index);
+            self.dirty = true;
         }
     }
 
