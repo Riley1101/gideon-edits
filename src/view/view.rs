@@ -263,8 +263,13 @@ impl View {
         self.need_redraw = true;
     }
 
+    fn save(&mut self) {
+        self.buffer.save();
+    }
+
     pub fn handle_command(&mut self, command: EditorCommand) {
         match command {
+            EditorCommand::Save => self.save(),
             EditorCommand::Resize(size) => self.resize(size),
             EditorCommand::Insert(char) => self.insert_char(char),
             EditorCommand::Move(direction) => self.move_text_location(&direction),

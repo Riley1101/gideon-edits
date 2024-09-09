@@ -1,11 +1,13 @@
 use super::line::Line;
 use super::view::Location;
-use std::fs::read_to_string;
+use std::fs::{read_to_string, File};
 use std::io::Error;
+use std::io::Write;
 
 #[derive(Default, Debug)]
 pub struct Buffer {
     pub lines: Vec<Line>,
+    pub file_name: Option<String>,
 }
 
 impl Buffer {
@@ -16,7 +18,20 @@ impl Buffer {
             let line = Line::from(value);
             lines.push(line);
         }
-        Ok(Self { lines })
+        Ok(Self {
+            lines,
+            file_name: Some(file_name.to_string()),
+        })
+    }
+
+    pub fn save(&self) -> Result<(), Error> {
+        if let Some(file_name) = &self.file_name {
+            let mut file = File::create(file_name)?;
+            for line in &self.lines {
+                writeln!(file, "{line}")?;
+            }
+        };
+        Ok(())
     }
 
     pub fn is_empty(&self) -> bool {
@@ -81,7 +96,6 @@ mod buffer_checks {
             grapheme_index: 0,
             line_index: 11,
         });
-
         assert_eq!(buffer.height(), 12);
     }
 }

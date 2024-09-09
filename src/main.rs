@@ -1,5 +1,4 @@
 #![warn(
-    clippy::pedantic,
     clippy::print_stdout,
     clippy::arithmetic_side_effects,
     clippy::integer_division
@@ -21,6 +20,5 @@ fn main() -> Result<(), std::io::Error> {
             ))?;
         }
     };
-
     Ok(())
 }
