@@ -1,3 +1,3 @@
-l# gideon-edits
-Apple of my balls
+# gideon-edits
+
 ##  A text editor with Rust. 
