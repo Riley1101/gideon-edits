@@ -1,8 +1,10 @@
 use crossterm::cursor::Hide;
 use crossterm::cursor::MoveTo;
 use crossterm::cursor::Show;
-use crossterm::style::Print;
+use crossterm::style::{Attribute, Print};
+use crossterm::terminal::SetTitle;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType};
+use crossterm::terminal::{DisableLineWrap, EnableLineWrap};
 use crossterm::{queue, Command};
 use std::io::{stdout, Error, Write};
 
@@ -72,9 +74,25 @@ pub trait Operations {
     /// * `T` - the type of command to queue.
     /// * `command` - the command to queue.
     fn queue_command<T: Command>(command: T) -> Result<(), Error>;
+
+    fn enable_line_wrap() -> Result<(), Error>;
+
+    fn disable_line_wrap() -> Result<(), Error>;
+
+    fn set_title(title: &str) -> Result<(), Error>;
+
+    fn print_inverted_row(row: usize, line_text: &str) -> Result<(), Error>;
 }
 
 impl Operations for Terminal {
+    fn print_row(row: usize, text: &str) -> Result<(), Error> {
+        Self::move_cursor_to(Position { x: 0, y: row })?;
+        Self::clear_line()?;
+        Self::print(text)?;
+        Self::execute()?;
+        Ok(())
+    }
+
     fn terminate() -> Result<(), Error> {
         disable_raw_mode()?;
         Ok(())
@@ -138,11 +156,32 @@ impl Operations for Terminal {
         Ok(())
     }
 
-    fn print_row(row: usize, text: &str) -> Result<(), Error> {
-        Self::move_cursor_to(Position { x: 0, y: row })?;
-        Self::clear_line()?;
-        Self::print(text)?;
-        Self::execute()?;
+    fn enable_line_wrap() -> Result<(), Error> {
+        Self::queue_command(EnableLineWrap)?;
         Ok(())
+    }
+
+    fn disable_line_wrap() -> Result<(), Error> {
+        Self::queue_command(DisableLineWrap)?;
+        Ok(())
+    }
+
+    fn set_title(title: &str) -> Result<(), Error> {
+        Self::queue_command(SetTitle(title))?;
+        Ok(())
+    }
+
+    fn print_inverted_row(row: usize, line_text: &str) -> Result<(), Error> {
+        let width = Self::size()?.width;
+
+        Self::print_row(
+            row,
+            &format!(
+                "{}{:width$.width$}{}",
+                Attribute::Reverse,
+                line_text,
+                Attribute::Reset
+            ),
+        )
     }
 }
