@@ -1,8 +1,9 @@
 #![allow(clippy::integer_division)]
 use super::{buffer, line::Line};
+use crate::editor::documentstatus::DocumentStatus;
 use crate::editor::{
     self,
-    editor::{DocumentStatus, NAME, VERSION},
+    editor::{NAME, VERSION},
     editor_commands::{Direction, EditorCommand},
 };
 use buffer::Buffer;
@@ -26,6 +27,21 @@ pub struct View {
 }
 
 impl View {
+    pub fn new(margin_bottom: usize) -> Self {
+        let terminal_size = Terminal::size().unwrap_or_default();
+        Self {
+            buffer: Buffer::default(),
+            need_redraw: true,
+            size: Size {
+                width: terminal_size.width,
+                height: terminal_size.height.saturating_sub(margin_bottom),
+            },
+            margin_bottom,
+            text_location: Location::default(),
+            scroll_offset: Position::default(),
+        }
+    }
+
     pub fn text_location_to_position(&self) -> Position {
         let y = self.text_location.line_index;
         let x = self.buffer.lines.get(y).map_or(0, |line| {
@@ -206,7 +222,10 @@ impl View {
     }
 
     pub fn resize(&mut self, to: Size) {
-        self.size = to;
+        self.size = Size {
+            width: to.width,
+            height: to.height.saturating_sub(self.margin_bottom),
+        };
         self.scroll_location_into_view();
         self.need_redraw = true;
     }
@@ -252,21 +271,6 @@ impl View {
 
     fn save(&mut self) {
         let _ = self.buffer.save();
-    }
-
-    pub fn new(margin_bottom: usize) -> Self {
-        let terminal_size = Terminal::size().unwrap_or_default();
-        Self {
-            buffer: Buffer::default(),
-            need_redraw: true,
-            size: Size {
-                width: terminal_size.width,
-                height: terminal_size.height.saturating_sub(margin_bottom),
-            },
-            margin_bottom,
-            text_location: Location::default(),
-            scroll_offset: Position::default(),
-        }
     }
 
     pub fn handle_command(&mut self, command: EditorCommand) {

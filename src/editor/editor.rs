@@ -12,36 +12,6 @@ use crate::view::view::View;
 pub const NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Debug, Default, Eq, PartialEq)]
-pub struct DocumentStatus {
-    pub total_lines: usize,
-    pub current_line_index: usize,
-    pub is_modified: bool,
-    pub file_name: String,
-}
-
-impl DocumentStatus {
-    pub fn modified_indicator_to_string(&self) -> String {
-        if self.is_modified {
-            String::from("{modified}")
-        } else {
-            String::new()
-        }
-    }
-
-    pub fn line_count_to_string(&self) -> String {
-        format!("{} lines", self.total_lines)
-    }
-
-    pub fn position_indicator_to_string(&self) -> String {
-        format!(
-            "{}/{}",
-            self.current_line_index.saturating_add(1),
-            self.total_lines
-        )
-    }
-}
-
 pub struct Editor {
     should_quit: bool,
     view: View,
@@ -68,6 +38,7 @@ impl Editor {
         if let Some(file_name) = args.get(1) {
             editor.view.load(file_name);
         }
+        editor.refresh_status();
         Ok(editor)
     }
 
@@ -86,6 +57,8 @@ impl Editor {
                     }
                 }
             }
+            let status = self.view.get_status();
+            self.status_bar.update_status(status);
         }
     }
 
@@ -107,6 +80,15 @@ impl Editor {
                     }
                 }
             }
+        }
+    }
+
+    pub fn refresh_status(&mut self) {
+        let status = self.view.get_status();
+        let title = format!("{} - {NAME}", status.file_name);
+        self.status_bar.update_status(status);
+        if title != self.title && matches!(Terminal::set_title(&title), Ok(())) {
+            self.title = title;
         }
     }
 

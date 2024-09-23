@@ -4,7 +4,7 @@ use crossterm::cursor::Show;
 use crossterm::style::{Attribute, Print};
 use crossterm::terminal::SetTitle;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType};
-use crossterm::terminal::{DisableLineWrap, EnableLineWrap};
+use crossterm::terminal::{DisableLineWrap, EnableLineWrap, EnterAlternateScreen};
 use crossterm::{queue, Command};
 use std::io::{stdout, Error, Write};
 
@@ -78,7 +78,7 @@ pub trait Operations {
     fn enable_line_wrap() -> Result<(), Error>;
 
     fn disable_line_wrap() -> Result<(), Error>;
-
+    fn enter_alternative_screen() -> Result<(), Error>;
     fn set_title(title: &str) -> Result<(), Error>;
 
     fn print_inverted_row(row: usize, line_text: &str) -> Result<(), Error>;
@@ -100,8 +100,9 @@ impl Operations for Terminal {
 
     fn initialize() -> Result<(), Error> {
         enable_raw_mode()?;
+        Self::enter_alternative_screen()?;
+        Self::disable_line_wrap()?;
         Self::clear_screen()?;
-        Self::move_cursor_to(Position { x: 0, y: 0 })?;
         Self::execute()?;
         Ok(())
     }
@@ -171,9 +172,13 @@ impl Operations for Terminal {
         Ok(())
     }
 
+    fn enter_alternative_screen() -> Result<(), Error> {
+        Self::queue_command(EnterAlternateScreen)?;
+        Ok(())
+    }
+
     fn print_inverted_row(row: usize, line_text: &str) -> Result<(), Error> {
         let width = Self::size()?.width;
-
         Self::print_row(
             row,
             &format!(

@@ -1,5 +1,5 @@
 use super::{
-    editor::DocumentStatus,
+    documentstatus::DocumentStatus,
     terminal::{Operations, Size, Terminal},
 };
 
@@ -54,7 +54,6 @@ impl StatusBar {
         if !self.needs_redraw || !self.is_visible {
             return;
         }
-
         if let Ok(size) = Terminal::size() {
             let line_count = self.current_status.line_count_to_string();
             let modified_indicator = self.current_status.modified_indicator_to_string();
@@ -62,23 +61,20 @@ impl StatusBar {
                 "{} - {line_count} {modified_indicator}",
                 self.current_status.file_name
             );
-
             let position_indicator = self.current_status.position_indicator_to_string();
-            let remainder_len = self.width.saturating_sub(beginning.len());
-            let status = format!("{beginning} {position_indicator}:>{remainder_len}");
+            let remainder_len = size.width.saturating_sub(beginning.len());
+            let status = format!("{beginning}{position_indicator}:>{remainder_len}");
 
-            let to_print = if status.len() <= self.width {
+            let to_print = if status.len() <= size.width {
                 status
             } else {
                 String::new()
             };
 
-        }
+            let result = Terminal::print_inverted_row(self.position_y, &to_print);
 
-        let mut status = format!("{:?}", self.current_status);
-        status.truncate(self.width);
-        let result = Terminal::print_row(self.position_y, &status);
-        debug_assert!(result.is_ok(), "Failed to render status bar");
-        self.needs_redraw = false;
+            debug_assert!(result.is_ok(), "Failed to render status bar");
+            self.needs_redraw = false;
+        }
     }
 }

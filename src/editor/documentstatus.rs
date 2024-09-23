@@ -1,12 +1,12 @@
-#[derive(Debug)]
-pub struct DoumentStatus {
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct DocumentStatus {
     pub total_lines: usize,
     pub current_line_index: usize,
     pub is_modified: bool,
     pub file_name: String,
 }
 
-impl DoumentStatus {
+impl DocumentStatus {
     pub fn modified_indicator_to_string(&self) -> String {
         if self.is_modified {
             String::from("{modified}")
