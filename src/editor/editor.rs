@@ -9,6 +9,9 @@ use terminal::Terminal;
 
 use crate::view::view::View;
 
+pub const NAME: &str = env!("CARGO_PKG_NAME");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct DocumentStatus {
     pub total_lines: usize,
@@ -43,6 +46,7 @@ pub struct Editor {
     should_quit: bool,
     view: View,
     status_bar: StatusBar,
+    title: String,
 }
 
 impl Editor {
@@ -53,16 +57,18 @@ impl Editor {
             current_hook(panic_info);
         }));
         Terminal::initialize()?;
-        let mut view = View::new(2);
         let args: Vec<String> = env::args().collect();
-        if let Some(file_name) = args.get(1) {
-            view.load(file_name);
-        }
-        Ok(Self {
+        let statusbar_margin = 2;
+        let mut editor = Self {
             should_quit: false,
-            view,
+            view: View::new(statusbar_margin),
             status_bar: StatusBar::new(1),
-        })
+            title: String::new(),
+        };
+        if let Some(file_name) = args.get(1) {
+            editor.view.load(file_name);
+        }
+        Ok(editor)
     }
 
     pub fn run(&mut self) {

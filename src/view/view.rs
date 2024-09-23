@@ -2,15 +2,12 @@
 use super::{buffer, line::Line};
 use crate::editor::{
     self,
-    editor::DocumentStatus,
+    editor::{DocumentStatus, NAME, VERSION},
     editor_commands::{Direction, EditorCommand},
 };
 use buffer::Buffer;
 use editor::terminal::{Operations, Position, Size, Terminal};
 use std::cmp::min;
-
-const NAME: &str = env!("CARGO_PKG_NAME");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Location {
@@ -282,6 +279,15 @@ impl View {
             EditorCommand::Delete => self.delete(),
             EditorCommand::Backspace => self.delete_backwards(),
             EditorCommand::Enter => self.insert_newline(),
+        }
+    }
+
+    pub fn get_status(&self) -> DocumentStatus {
+        DocumentStatus {
+            total_lines: self.buffer.height(),
+            current_line_index: self.text_location.line_index,
+            is_modified: self.buffer.dirty,
+            file_name: format!("{}", self.buffer.file_info),
         }
     }
 }

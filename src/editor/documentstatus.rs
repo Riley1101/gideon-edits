@@ -15,11 +15,11 @@ impl DoumentStatus {
         }
     }
 
-    pub fn line_count_to_string(&self) {
+    pub fn line_count_to_string(&self) -> String {
         format!("{} lines", self.total_lines)
     }
 
-    pub fn position_indicator_to_string(&self) {
+    pub fn position_indicator_to_string(&self) -> String {
         format!(
             "{}/{}",
             self.current_line_index.saturating_add(1),
