@@ -1,4 +1,4 @@
-# gideon-edits
+ gideon-edits
 
-##  A text editor with Rust.
-### item is coool but its not updatingo
+## A text editor in Rust
+Item is cool  and i love it 

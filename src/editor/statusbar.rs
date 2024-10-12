@@ -21,7 +21,7 @@ impl StatusBar {
             needs_redraw: true,
             margin_bottom,
             width: size.width,
-            position_y: 0, 
+            position_y: 0,
             is_visible: true,
         };
 
@@ -68,7 +68,7 @@ impl StatusBar {
             );
             let position_indicator = self.current_status.position_indicator_to_string();
             let remainder_len = size.width.saturating_sub(beginning.len());
-            let status = format!("{beginning}{position_indicator}:>{remainder_len}");
+            let status = format!("{beginning}{position_indicator} :> {remainder_len}");
 
             let to_print = if status.len() <= size.width {
                 status

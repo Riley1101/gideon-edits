@@ -1,4 +1,5 @@
 use super::editor_commands;
+use super::plugins::Plugin;
 use super::statusbar::StatusBar;
 use super::terminal::{self, Operations};
 use crossterm::event::{read, Event, KeyEvent, KeyEventKind};
@@ -17,6 +18,7 @@ pub struct Editor {
     view: View,
     status_bar: StatusBar,
     title: String,
+    plugins: Plugin,
 }
 
 impl Editor {
@@ -34,6 +36,7 @@ impl Editor {
             view: View::new(statusbar_margin),
             status_bar: StatusBar::new(1),
             title: String::new(),
+            plugins: Plugin::new(),
         };
         if let Some(file_name) = args.get(1) {
             editor.view.load(file_name);
