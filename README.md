@@ -1,8 +1,8 @@
  gideon-edits
 
 ## A text editor in Rust
-Item is cool  and i love it 
 
+![Preview Image!](https://raw.githubusercontent.com/Riley1101/gideon-edits/refs/heads/main/preview/preview.png)
 
 
 
