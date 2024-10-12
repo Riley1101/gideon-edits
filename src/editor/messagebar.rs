@@ -5,7 +5,7 @@ use super::{
     uicomponent::UIComponent,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MessageBar {
     current_message: String,
     needs_redraw: bool,
