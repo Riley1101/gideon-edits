@@ -16,14 +16,17 @@ pub struct StatusBar {
 impl StatusBar {
     pub fn new(margin_bottom: usize) -> Self {
         let size = Terminal::size().unwrap_or_default();
-        Self {
+        let mut status_bar = Self {
             current_status: DocumentStatus::default(),
             needs_redraw: true,
             margin_bottom,
             width: size.width,
-            position_y: 0,
-            is_visible: false,
-        }
+            position_y: 0, 
+            is_visible: true,
+        };
+
+        status_bar.resize(size);
+        status_bar
     }
 
     pub fn resize(&mut self, size: Size) {
@@ -55,7 +58,9 @@ impl StatusBar {
             return;
         }
         if let Ok(size) = Terminal::size() {
+            // line count depending to input contents
             let line_count = self.current_status.line_count_to_string();
+
             let modified_indicator = self.current_status.modified_indicator_to_string();
             let beginning = format!(
                 "{} - {line_count} {modified_indicator}",
