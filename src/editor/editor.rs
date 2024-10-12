@@ -36,7 +36,6 @@ impl Editor {
         }));
         Terminal::initialize()?;
         let args: Vec<String> = env::args().collect();
-        let statusbar_margin = 2;
 
         let mut editor = Editor::default();
         let size = Terminal::size().unwrap_or_default();
