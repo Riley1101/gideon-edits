@@ -1,4 +1,5 @@
 pub mod editor;
+pub mod command;
 pub mod documentstatus;
 pub mod uicomponent;
 pub mod editor_commands;
