@@ -53,5 +53,4 @@ impl UIComponent for StatusBar {
         Terminal::print_inverted_row(origin, &to_print)?;
         Ok(())
     }
-    // add code here
 }
