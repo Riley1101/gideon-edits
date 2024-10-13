@@ -4,7 +4,9 @@ use crossterm::cursor::Show;
 use crossterm::style::{Attribute, Print};
 use crossterm::terminal::SetTitle;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType};
-use crossterm::terminal::{DisableLineWrap, EnableLineWrap, EnterAlternateScreen};
+use crossterm::terminal::{
+    DisableLineWrap, EnableLineWrap, EnterAlternateScreen, LeaveAlternateScreen,
+};
 use crossterm::{queue, Command};
 use std::io::{stdout, Error, Write};
 
@@ -78,7 +80,11 @@ pub trait Operations {
     fn enable_line_wrap() -> Result<(), Error>;
 
     fn disable_line_wrap() -> Result<(), Error>;
+
     fn enter_alternative_screen() -> Result<(), Error>;
+
+    fn leave_alternative_screen() -> Result<(), Error>;
+
     fn set_title(title: &str) -> Result<(), Error>;
 
     fn print_inverted_row(row: usize, line_text: &str) -> Result<(), Error>;
@@ -94,6 +100,10 @@ impl Operations for Terminal {
     }
 
     fn terminate() -> Result<(), Error> {
+        Self::leave_alternative_screen()?;
+        Self::enable_line_wrap()?;
+        Self::show_cursor()?;
+        Self::execute()?;
         disable_raw_mode()?;
         Ok(())
     }
@@ -188,5 +198,8 @@ impl Operations for Terminal {
                 Attribute::Reset
             ),
         )
+    }
+    fn leave_alternative_screen() -> Result<(), Error> {
+        Self::queue_command(LeaveAlternateScreen)
     }
 }
