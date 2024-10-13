@@ -202,7 +202,7 @@ impl View {
         self.mark_draw(true);
     }
 
-    fn save(&mut self) -> Result<(), Error> {
+    pub fn save(&mut self) -> Result<(), Error> {
         self.buffer.save()
     }
 

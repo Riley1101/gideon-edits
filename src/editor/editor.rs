@@ -2,7 +2,6 @@ use super::command::{
     Command::{self, Edit, Move, System},
     System::{Quit, Resize, Save},
 };
-use super::editor_commands;
 use super::messagebar::MessageBar;
 use super::plugins::Plugin;
 use super::statusbar::StatusBar;
@@ -10,7 +9,6 @@ use super::terminal::{self, Operations, Size};
 use super::uicomponent::UIComponent;
 use crate::view::view::View;
 use crossterm::event::{read, Event, KeyEvent, KeyEventKind};
-use editor_commands::EditorCommand;
 use std::panic::{set_hook, take_hook};
 use std::{env, io::Error};
 use terminal::Terminal;
@@ -114,6 +112,21 @@ impl Editor {
             System(Quit) => self.handle_quit(),
             System(Resize(size)) => self.resize(size),
             _ => self.reset_quit_time(),
+        }
+
+        match command {
+            System(Quit | Resize(_)) => {}
+            System(Save) => self.handle_save(),
+            Edit(editor_command) => self.view.handle_edit_command(editor_command),
+            Move(editor_command) => self.view.handle_move_command(editor_command),
+        }
+    }
+
+    fn handle_save(&mut self) {
+        if self.view.save().is_ok() {
+            self.message_bar.update_message("File saved successfully");
+        } else {
+            self.message_bar.update_message("Error writing file");
         }
     }
 
