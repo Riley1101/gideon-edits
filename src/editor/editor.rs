@@ -1,19 +1,24 @@
+use super::command::{
+    Command::{self, Edit, Move, System},
+    System::{Quit, Resize, Save},
+};
 use super::editor_commands;
 use super::messagebar::MessageBar;
 use super::plugins::Plugin;
 use super::statusbar::StatusBar;
 use super::terminal::{self, Operations, Size};
 use super::uicomponent::UIComponent;
+use crate::view::view::View;
 use crossterm::event::{read, Event, KeyEvent, KeyEventKind};
 use editor_commands::EditorCommand;
 use std::panic::{set_hook, take_hook};
 use std::{env, io::Error};
 use terminal::Terminal;
 
-use crate::view::view::View;
-
 pub const NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+const QUIT_TIMES: u8 = 3;
 
 #[allow(dead_code)]
 #[derive(Default)]
@@ -25,6 +30,7 @@ pub struct Editor {
     terminal_size: Size,
     title: String,
     plugins: Plugin,
+    quit_times: u8,
 }
 
 impl Editor {
@@ -36,17 +42,18 @@ impl Editor {
         }));
         Terminal::initialize()?;
         let args: Vec<String> = env::args().collect();
-
         let mut editor = Editor::default();
         let size = Terminal::size().unwrap_or_default();
         editor.resize(size);
-
         editor
             .message_bar
-            .update_message("HELP: Ctrl-S = save | Ctrl-Q = quit".to_string());
-
+            .update_message("HELP: Ctrl-S = save | Ctrl-Q = quit");
         if let Some(file_name) = args.get(1) {
-            editor.view.load(file_name);
+            if editor.view.load(file_name).is_err() {
+                editor
+                    .message_bar
+                    .update_message(&format!("Cannot open file: {file_name}"))
+            }
         }
         editor.refresh_status();
         Ok(editor)
@@ -96,15 +103,37 @@ impl Editor {
         };
 
         if should_process {
-            if let Ok(command) = EditorCommand::try_from(event) {
-                if matches!(command, EditorCommand::Quit) {
-                    self.should_quit = true;
-                } else if let EditorCommand::Resize(size) = command {
-                    self.resize(size);
-                } else {
-                    self.view.handle_command(command);
-                }
+            if let Ok(command) = Command::try_from(event) {
+                self.process_command(command);
             }
+        }
+    }
+
+    fn process_command(&mut self, command: Command) {
+        match command {
+            System(Quit) => self.handle_quit(),
+            System(Resize(size)) => self.resize(size),
+            _ => self.reset_quit_time(),
+        }
+    }
+
+    #[allow(clippy::arithmetic_side_effects)]
+    fn handle_quit(&mut self) {
+        if !self.view.get_status().is_modified || self.quit_times + 1 == QUIT_TIMES {
+            self.should_quit = true;
+        } else if self.view.get_status().is_modified {
+            self.message_bar.update_message(&format!(
+                "WARNING! File has unsaved changes. Press Ctrl-Q {} times more to quit",
+                QUIT_TIMES - self.quit_times - 1
+            ));
+            self.quit_times += 1;
+        }
+    }
+
+    fn reset_quit_time(&mut self) {
+        if self.quit_times > 0 {
+            self.quit_times = 0;
+            self.message_bar.update_message("");
         }
     }
 

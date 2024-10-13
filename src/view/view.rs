@@ -4,8 +4,8 @@ use crate::editor::documentstatus::DocumentStatus;
 use crate::editor::uicomponent::UIComponent;
 use crate::editor::{
     self,
+    command::{Edit, Move},
     editor::{NAME, VERSION},
-    editor_commands::{Direction, EditorCommand},
 };
 use buffer::Buffer;
 use editor::terminal::{Operations, Position, Size, Terminal};
@@ -60,11 +60,11 @@ impl View {
         debug_assert!(result.is_ok(), "Failed to render line");
     }
 
-    pub fn load(&mut self, file_name: &str) {
-        if let Ok(buffer) = Buffer::load(file_name) {
-            self.buffer = buffer;
-            self.mark_draw(true);
-        }
+    pub fn load(&mut self, file_name: &str) -> Result<(), Error> {
+        let buffer = Buffer::load(file_name)?;
+        self.buffer = buffer;
+        self.mark_draw(true);
+        Ok(())
     }
 
     fn scroll_vertically(&mut self, to: usize) {
@@ -99,23 +99,6 @@ impl View {
         let Position { x, y } = self.text_location_to_position();
         self.scroll_vertically(y);
         self.scroll_horizontally(x);
-    }
-
-    fn move_text_location(&mut self, direction: &Direction) {
-        let Size { height, .. } = self.size;
-        match direction {
-            Direction::Up => {
-                self.move_up(1);
-            }
-            Direction::Down => self.move_down(1),
-            Direction::Left => self.move_left(),
-            Direction::Right => self.move_right(),
-            Direction::PageUp => self.move_up(height.saturating_sub(1)),
-            Direction::PageDown => self.move_down(height.saturating_sub(1)),
-            Direction::Home => self.move_to_start_of_line(),
-            Direction::End => self.move_to_end_of_line(),
-        }
-        self.scroll_location_into_view();
     }
 
     fn move_up(&mut self, step: usize) {
@@ -203,7 +186,7 @@ impl View {
 
     fn delete_backwards(&mut self) {
         if self.text_location.line_index != 0 || self.text_location.grapheme_index != 0 {
-            self.move_text_location(&Direction::Left);
+            self.handle_move_command(Move::Left);
             self.delete();
         }
     }
@@ -215,24 +198,35 @@ impl View {
 
     fn insert_newline(&mut self) {
         self.buffer.insert_newline(&self.text_location);
-        self.move_text_location(&Direction::Right);
+        self.handle_move_command(Move::Right);
         self.mark_draw(true);
     }
 
-    fn save(&mut self) {
-        let _ = self.buffer.save();
+    fn save(&mut self) -> Result<(), Error> {
+        self.buffer.save()
     }
 
-    pub fn handle_command(&mut self, command: EditorCommand) {
+    pub fn handle_edit_command(&mut self, command: Edit) {
         match command {
-            EditorCommand::Save => self.save(),
-            EditorCommand::Insert(char) => self.insert_char(char),
-            EditorCommand::Move(direction) => self.move_text_location(&direction),
-            EditorCommand::Quit | EditorCommand::Resize(_) => {}
-            EditorCommand::Delete => self.delete(),
-            EditorCommand::Backspace => self.delete_backwards(),
-            EditorCommand::Enter => self.insert_newline(),
+            Edit::Insert(char) => self.insert_char(char),
+            Edit::InsertNewLine => self.insert_newline(),
+            Edit::Delete => self.delete(),
+            Edit::DeleteBackward => self.delete_backwards(),
         }
+    }
+
+    pub fn handle_move_command(&mut self, command: Move) {
+        match command {
+            Move::PageUp => self.move_up(1),
+            Move::PageDown => self.move_down(1),
+            Move::StartOfLine => self.move_to_start_of_line(),
+            Move::EndOfLine => self.move_to_end_of_line(),
+            Move::Up => self.move_up(1),
+            Move::Left => self.move_left(),
+            Move::Right => self.move_right(),
+            Move::Down => self.move_down(1),
+        }
+        self.scroll_location_into_view();
     }
 
     pub fn get_status(&self) -> DocumentStatus {
